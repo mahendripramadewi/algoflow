@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>AlgoFlow — Prinsip Dasar Algoritma Pemrograman</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   ALGOFLOW — Design tokens
+   Konsep: "papan sirkuit saat senja" — navy tinta + jejak sirkuit
+   cyan/violet, amber untuk simbol keputusan, koral untuk galat.
+   Motif berulang: bentuk simbol flowchart (terminator, proses,
+   keputusan, I/O) dipakai sebagai elemen navigasi & dekorasi.
+   ============================================================ */
+:root{
+  --bg-void:#080B14;
+  --bg-panel:#111729;
+  --bg-panel-alt:#171F38;
+  --bg-panel-raised:#1C2542;
+  --line:rgba(148,168,214,0.14);
+  --line-strong:rgba(148,168,214,0.28);
+
+  --cyan:#2FE6D1;
+  --cyan-dim:#1B8F82;
+  --violet:#9D7BFF;
+  --violet-dim:#6C51C4;
+  --amber:#FFB94D;
+  --rose:#FF6E8E;
+  --green:#3FE28C;
+
+  --text-hi:#F3F6FD;
+  --text-mid:#AAB6D6;
+  --text-dim:#6B7699;
+
+  --grad-hero: radial-gradient(circle at 15% 20%, rgba(157,123,255,0.20), transparent 55%),
+               radial-gradient(circle at 85% 0%, rgba(47,230,209,0.16), transparent 50%),
+               var(--bg-void);
+
+  --font-display:'Space Grotesk', sans-serif;
+  --font-body:'Inter', sans-serif;
+  --font-mono:'JetBrains Mono', monospace;
+
+  --radius-s:10px;
+  --radius-m:16px;
+  --radius-l:26px;
+}
+
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0;
+  background:var(--bg-void);
+  color:var(--text-hi);
+  font-family:var(--font-body);
+  -webkit-font-smoothing:antialiased;
+  overflow:hidden;
+}
+::selection{background:var(--violet);color:#0A0E1A;}
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--bg-panel-raised);border-radius:10px;border:2px solid var(--bg-void);}
+h1,h2,h3,h4{font-family:var(--font-display);margin:0;letter-spacing:-0.01em;}
+p{margin:0;line-height:1.65;}
+button{font-family:var(--font-body);cursor:pointer;}
+a{color:var(--cyan);}
+code,.mono{font-family:var(--font-mono);}
+
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--font-mono);font-size:12.5px;letter-spacing:0.12em;
+  text-transform:uppercase;color:var(--cyan);font-weight:500;
+}
+.eyebrow::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 10px var(--cyan);}
+
+/* ---------- app shell ---------- */
+#app{position:relative;width:100vw;height:100dvh;height:100vh;}
+.screen{position:absolute;inset:0;display:none;}
+.screen.active{display:block;}
+
+/* ============================================================
+   LOGIN SCREEN
+   ============================================================ */
+#screen-login{
+  background:var(--grad-hero);
+  display:none;place-items:center;padding:24px;overflow-y:auto;
+}
+#screen-login.active{display:grid;}
+.login-wrap{
+  width:100%;max-width:920px;
+  display:grid;grid-template-columns:1.1fr 1fr;
+  background:var(--bg-panel);border:1px solid var(--line);
+  border-radius:var(--radius-l);overflow:hidden;
+  box-shadow:0 40px 90px -30px rgba(0,0,0,0.7);
+}
+.login-visual{
+  position:relative;padding:44px 36px;
+  background:linear-gradient(160deg,var(--bg-panel-alt),var(--bg-void));
+  display:flex;flex-direction:column;justify-content:space-between;
+  border-right:1px solid var(--line);
+}
+.login-visual .brand{display:flex;align-items:center;gap:10px;}
+.brand-mark{
+  width:38px;height:38px;border-radius:11px;
+  background:linear-gradient(135deg,var(--cyan),var(--violet));
+  display:grid;place-items:center;font-family:var(--font-display);
+  font-weight:700;color:#0A0E1A;font-size:16px;
+}
+.brand-name{font-family:var(--font-display);font-weight:700;font-size:18px;}
+.brand-name span{color:var(--cyan);}
+
+.flow-mini{margin-top:28px;display:flex;flex-direction:column;align-items:center;gap:0;}
+.fm-shape{font-family:var(--font-mono);font-size:11.5px;color:var(--bg-void);font-weight:700;text-align:center;padding:0 8px;}
+.fm-terminator{width:132px;height:38px;border-radius:999px;background:var(--cyan);display:grid;place-items:center;box-shadow:0 0 24px rgba(47,230,209,0.35);}
+.fm-arrow{width:2px;height:22px;background:var(--line-strong);position:relative;}
+.fm-arrow::after{content:"";position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--line-strong);}
+.fm-io{width:150px;height:42px;background:var(--violet);transform:skewX(-18deg);display:grid;place-items:center;}
+.fm-io .fm-shape{transform:skewX(18deg);}
+.fm-decision{width:96px;height:96px;background:var(--amber);transform:rotate(45deg);display:grid;place-items:center;border-radius:8px;}
+.fm-decision .fm-shape{transform:rotate(-45deg);width:70px;}
+.fm-process{width:150px;height:42px;border-radius:6px;background:var(--rose);display:grid;place-items:center;}
+
+.login-visual .quote{color:var(--text-mid);font-size:13.5px;line-height:1.6;}
+.login-visual .quote b{color:var(--text-hi);}
+
+.login-form{padding:44px 40px;display:flex;flex-direction:column;justify-content:center;gap:20px;}
+.login-form h1{font-size:26px;line-height:1.25;margin-bottom:2px;}
+.login-form .sub{color:var(--text-mid);font-size:14.5px;}
+.field{display:flex;flex-direction:column;gap:7px;}
+.field label{font-size:12.5px;font-weight:600;color:var(--text-mid);text-transform:uppercase;letter-spacing:0.06em;}
+.field input,.field select{
+  background:var(--bg-panel-alt);border:1.5px solid var(--line);color:var(--text-hi);
+  border-radius:var(--radius-s);padding:13px 14px;font-size:15px;font-family:var(--font-body);
+  outline:none;transition:border-color .15s ease, box-shadow .15s ease;
+  appearance:none;-webkit-appearance:none;
+}
+.field select{
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'><path d='M5 7l5 5 5-5' stroke='%236B7699' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat:no-repeat;background-position:right 14px center;padding-right:38px;
+}
+.field input:focus,.field select:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(47,230,209,0.18);}
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+
+.btn{
+  border:none;border-radius:999px;padding:15px 26px;font-weight:700;font-size:15px;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  transition:transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+}
+.btn:active{transform:scale(0.97);}
+.btn-primary{background:linear-gradient(100deg,var(--cyan),var(--violet));color:#08101A;box-shadow:0 14px 30px -12px rgba(47,230,209,0.45);}
+.btn-primary:hover{box-shadow:0 18px 36px -10px rgba(157,123,255,0.55);}
+.btn-primary:disabled{opacity:0.4;cursor:not-allowed;box-shadow:none;}
+.btn-ghost{background:transparent;border:1.5px solid var(--line-strong);color:var(--text-hi);}
+.btn-ghost:hover{border-color:var(--cyan);color:var(--cyan);}
+.error-msg{color:var(--rose);font-size:13px;font-weight:600;min-height:16px;}
+
+/* ============================================================
+   MAIN SCREEN (menu + slide deck)
+   ============================================================ */
+#screen-main{display:none;background:var(--bg-void);}
+#screen-main.active{display:flex;flex-direction:column;height:100%;}
+
+.topbar{
+  display:flex;align-items:center;gap:10px;padding:12px 22px;
+  background:rgba(17,23,41,0.9);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);flex-shrink:0;z-index:50;
+}
+.topbar .brand{display:flex;align-items:center;gap:9px;cursor:pointer;margin-right:8px;}
+.topbar .brand-mark{width:30px;height:30px;font-size:13px;border-radius:9px;}
+.topbar .brand-name{font-size:14.5px;display:none;}
+@media(min-width:760px){.topbar .brand-name{display:block;}}
+
+.topnav{display:flex;gap:4px;flex:1;overflow-x:auto;scrollbar-width:none;}
+.topnav::-webkit-scrollbar{display:none;}
+.topnav-btn{
+  flex-shrink:0;background:transparent;border:1px solid transparent;color:var(--text-mid);
+  padding:9px 15px;border-radius:999px;font-size:13.5px;font-weight:600;
+  display:flex;align-items:center;gap:7px;transition:all .15s ease;white-space:nowrap;
+}
+.topnav-btn .num{
+  width:18px;height:18px;border-radius:5px;background:var(--bg-panel-raised);color:var(--text-dim);
+  font-family:var(--font-mono);font-size:10px;display:grid;place-items:center;flex-shrink:0;
+}
+.topnav-btn:hover{color:var(--text-hi);background:var(--bg-panel-alt);}
+.topnav-btn.active{color:#08101A;background:linear-gradient(100deg,var(--cyan),var(--violet));}
+.topnav-btn.active .num{background:rgba(8,16,26,0.25);color:#08101A;}
+
+.student-chip{
+  flex-shrink:0;display:flex;align-items:center;gap:9px;background:var(--bg-panel-alt);
+  border:1px solid var(--line);border-radius:999px;padding:6px 14px 6px 6px;
+}
+.student-chip .avatar{
+  width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--violet),var(--rose));
+  display:grid;place-items:center;font-size:11px;font-weight:700;color:#fff;
+}
+.student-chip .info{font-size:11.5px;line-height:1.3;}
+.student-chip .info b{display:block;font-size:12.5px;color:var(--text-hi);}
+.student-chip .info span{color:var(--text-dim);}
+
+/* slide viewport */
+.slides-viewport{position:relative;flex:1;overflow:hidden;}
+.slide{
+  position:absolute;inset:0;overflow-y:auto;
+  padding:44px 8vw 130px;
+  opacity:0;visibility:hidden;transform:translateY(18px);
+  transition:opacity .35s ease, transform .4s ease;
+  display:flex;flex-direction:column;align-items:center;
+}
+.slide.active{opacity:1;visibility:visible;transform:translateY(0);position:relative;}
+.slide-inner{width:100%;max-width:980px;display:flex;flex-direction:column;gap:22px;}
+.slide-head{display:flex;flex-direction:column;gap:10px;margin-bottom:4px;}
+.slide-head h2{font-size:clamp(24px,3.4vw,38px);}
+.slide-head .desc{color:var(--text-mid);font-size:15.5px;max-width:640px;}
+
+.card{
+  background:var(--bg-panel);border:1px solid var(--line);border-radius:var(--radius-m);
+  padding:26px 28px;
+}
+.card-title{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:700;margin-bottom:12px;color:var(--text-hi);}
+.card-title .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+@media(max-width:760px){.grid-2,.grid-3{grid-template-columns:1fr;}}
+
+/* home / menu screen */
+.slide[data-role="home"]{padding-top:6vh;}
+.home-hero{text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px;max-width:720px;margin:0 auto 10px;}
+.home-hero h1{font-size:clamp(30px,5vw,50px);line-height:1.1;}
+.home-hero h1 span{background:linear-gradient(100deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent;}
+.home-hero p{color:var(--text-mid);font-size:16px;max-width:560px;}
+
+.menu-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;width:100%;max-width:980px;margin:18px auto 0;}
+@media(max-width:900px){.menu-grid{grid-template-columns:repeat(2,1fr);}}
+.menu-card{
+  background:var(--bg-panel);border:1px solid var(--line);border-radius:var(--radius-m);
+  padding:24px 18px;display:flex;flex-direction:column;gap:14px;text-align:left;
+  transition:transform .18s ease, border-color .18s ease, background .18s ease;
+  color:var(--text-hi);
+}
+.menu-card:hover{transform:translateY(-5px);border-color:var(--cyan);background:var(--bg-panel-alt);}
+.menu-card .ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:19px;}
+.menu-card b{font-size:14.5px;font-family:var(--font-display);}
+.menu-card small{color:var(--text-dim);font-size:12px;line-height:1.5;}
+
+/* bottom nav */
+.bottom-nav{
+  position:absolute;left:0;right:0;bottom:0;z-index:40;
+  display:flex;align-items:center;justify-content:center;gap:18px;
+  padding:14px 20px 18px;
+  background:linear-gradient(0deg,rgba(8,11,20,0.96) 40%, rgba(8,11,20,0));
+  pointer-events:none;
+}
+.bottom-nav>*{pointer-events:auto;}
+.nav-arrow{
+  width:46px;height:46px;border-radius:50%;background:var(--bg-panel-raised);
+  border:1px solid var(--line-strong);color:var(--text-hi);display:grid;place-items:center;
+  font-size:18px;flex-shrink:0;transition:all .15s ease;
+}
+.nav-arrow:hover:not(:disabled){background:var(--cyan);color:#08101A;border-color:var(--cyan);}
+.nav-arrow:disabled{opacity:0.25;cursor:not-allowed;}
+.nav-dots{display:flex;gap:7px;background:var(--bg-panel);border:1px solid var(--line);padding:8px 14px;border-radius:999px;}
+.nav-dot{width:7px;height:7px;border-radius:50%;background:var(--bg-panel-raised);transition:all .2s ease;}
+.nav-dot.active{width:20px;border-radius:4px;background:linear-gradient(100deg,var(--cyan),var(--violet));}
+.nav-label{font-family:var(--font-mono);font-size:11.5px;color:var(--text-dim);background:var(--bg-panel);border:1px solid var(--line);padding:8px 13px;border-radius:999px;}
+
+/* ---------- content bits ---------- */
+.badge{
+  display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;
+  padding:5px 11px;border-radius:999px;font-family:var(--font-mono);
+}
+.badge.b-cyan{background:rgba(47,230,209,0.14);color:var(--cyan);}
+.badge.b-violet{background:rgba(157,123,255,0.16);color:var(--violet);}
+.badge.b-amber{background:rgba(255,185,77,0.16);color:var(--amber);}
+.badge.b-rose{background:rgba(255,110,142,0.16);color:var(--rose);}
+
+.objective-list{display:flex;flex-direction:column;gap:14px;}
+.objective-item{display:flex;gap:16px;align-items:flex-start;background:var(--bg-panel);border:1px solid var(--line);border-radius:var(--radius-m);padding:20px 22px;}
+.objective-item .idx{
+  width:38px;height:38px;border-radius:11px;flex-shrink:0;display:grid;place-items:center;
+  font-family:var(--font-mono);font-weight:700;font-size:14px;background:var(--bg-panel-alt);color:var(--cyan);
+  border:1px solid var(--line-strong);
+}
+.objective-item p{color:var(--text-mid);font-size:14.5px;margin-top:4px;}
+.objective-item b{color:var(--text-hi);font-size:15.5px;}
+
+pre.code-block{
+  background:#0A0F1E;border:1px solid var(--line);border-radius:var(--radius-s);
+  padding:18px 20px;font-family:var(--font-mono);font-size:13.5px;line-height:1.75;
+  color:#CFE8FF;overflow-x:auto;
+}
+pre.code-block .kw{color:var(--violet);font-weight:700;}
+pre.code-block .cm{color:var(--text-dim);font-style:italic;}
+pre.code-block .fn{color:var(--cyan);}
+pre.code-block .num{color:var(--amber);}
+
+table.data-table{width:100%;border-collapse:collapse;font-size:13.5px;}
+table.data-table th,table.data-table td{padding:10px 14px;text-align:center;border-bottom:1px solid var(--line);}
+table.data-table th{color:var(--cyan);font-family:var(--font-mono);font-size:12px;text-transform:uppercase;letter-spacing:0.05em;background:var(--bg-panel-alt);}
+table.data-table td{color:var(--text-mid);font-family:var(--font-mono);}
+table.data-table tr:last-child td{border-bottom:none;}
+table.data-table td.hi{color:var(--text-hi);font-weight:700;}
+
+.video-frame{
+  aspect-ratio:16/9;border-radius:var(--radius-m);border:1.5px dashed var(--line-strong);
+  background:var(--bg-panel-alt);display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;color:var(--text-dim);text-align:center;padding:20px;
+}
+.video-frame .play{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--violet));display:grid;place-items:center;color:#08101A;font-size:20px;}
+
+/* symbol legend */
+.symbol-row{display:flex;align-items:center;gap:18px;padding:16px 6px;border-bottom:1px solid var(--line);}
+.symbol-row:last-child{border-bottom:none;}
+.sym{flex-shrink:0;display:grid;place-items:center;font-family:var(--font-mono);font-size:10.5px;font-weight:700;color:#08101A;text-align:center;}
+.sym-terminator{width:118px;height:40px;border-radius:999px;background:var(--cyan);}
+.sym-process{width:118px;height:44px;border-radius:6px;background:var(--rose);}
+.sym-decision{width:60px;height:60px;background:var(--amber);transform:rotate(45deg);border-radius:6px;}
+.sym-decision span{transform:rotate(-45deg);display:block;width:78px;}
+.sym-io{width:118px;height:44px;background:var(--violet);transform:skewX(-18deg);}
+.sym-io span{display:block;transform:skewX(18deg);}
+.symbol-row .meta b{display:block;font-size:14.5px;color:var(--text-hi);margin-bottom:3px;}
+.symbol-row .meta span{font-size:13px;color:var(--text-mid);}
+
+/* ---------- flowchart game ---------- */
+.game-wrap{display:grid;grid-template-columns:1fr 320px;gap:22px;align-items:flex-start;}
+@media(max-width:900px){.game-wrap{grid-template-columns:1fr;}}
+.game-board{background:var(--bg-panel);border:1px solid var(--line);border-radius:var(--radius-m);padding:26px;display:flex;flex-direction:column;align-items:center;gap:0;min-height:560px;}
+.dropzone{
+  width:100%;max-width:340px;min-height:56px;border:2px dashed var(--line-strong);border-radius:var(--radius-s);
+  margin:0 auto;display:flex;align-items:center;justify-content:center;position:relative;transition:all .15s ease;
+}
+.dropzone .zone-label{position:absolute;left:-92px;top:50%;transform:translateY(-50%);font-family:var(--font-mono);font-size:11px;color:var(--text-dim);width:80px;text-align:right;}
+.dropzone.filled{border-style:solid;border-color:transparent;padding:0;}
+.dropzone.over{border-color:var(--cyan);background:rgba(47,230,209,0.08);}
+.dropzone.correct{border-color:var(--green);}
+.dropzone.wrong{border-color:var(--rose);}
+.zone-arrow{width:2px;height:26px;background:var(--line-strong);position:relative;margin:2px 0;}
+.zone-arrow::after{content:"";position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--line-strong);}
+
+.piece{
+  width:100%;height:100%;min-height:52px;display:flex;align-items:center;justify-content:center;text-align:center;
+  font-family:var(--font-mono);font-weight:700;font-size:12.5px;color:#08101A;padding:6px 14px;cursor:grab;user-select:none;
+}
+.piece.p-terminator{border-radius:999px;background:var(--cyan);}
+.piece.p-io{background:var(--violet);}
+.piece.p-decision{background:var(--amber);}
+.piece.p-process{border-radius:6px;background:var(--rose);}
+
+.piece-tray{display:flex;flex-direction:column;gap:12px;}
+.tray-slot{
+  border-radius:8px;min-height:52px;display:flex;align-items:center;justify-content:center;
+  border:1.5px solid var(--line);background:var(--bg-panel-alt);
+}
+.tray-shape{width:100%;height:100%;border-radius:8px;}
+
+.game-panel{display:flex;flex-direction:column;gap:16px;position:sticky;top:0;}
+.game-status{background:var(--bg-panel);border:1px solid var(--line);border-radius:var(--radius-m);padding:20px;}
+.game-status .score{font-family:var(--font-mono);font-size:34px;font-weight:700;color:var(--cyan);}
+.game-status .lbl{font-size:12px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.06em;}
+.feedback-msg{font-size:13.5px;padding:12px 14px;border-radius:10px;margin-top:12px;display:none;line-height:1.5;}
+.feedback-msg.ok{display:block;background:rgba(63,226,140,0.12);color:var(--green);border:1px solid rgba(63,226,140,0.3);}
+.feedback-msg.fail{display:block;background:rgba(255,110,142,0.12);color:var(--rose);border:1px solid rgba(255,110,142,0.3);}
+
+/* ---------- LKPD ---------- */
+.lkpd-header{display:flex;justify-content:space-between;align-items:center;gap:20px;background:var(--bg-panel);border:1px solid var(--line);border-radius:var(--radius-m);padding:18px 24px;flex-wrap:wrap;}
+.lkpd-header .id-item{font-size:12px;color:var(--text-dim);}
+.lkpd-header .id-item b{display:block;font-size:14.5px;color:var(--text-hi);font-family:var(--font-display);}
+.qnum{
+  width:30px;height:30px;border-radius:9px;background:var(--bg-panel-alt);color:var(--violet);
+  display:grid;place-items:center;font-family:var(--font-mono);font-weight:700;font-size:13px;flex-shrink:0;
+  border:1px solid var(--line-strong);
+}
+.question-block{display:flex;flex-direction:column;gap:12px;}
+.question-block .qhead{display:flex;gap:12px;align-items:flex-start;}
+textarea.answer-box{
+  width:100%;min-height:110px;background:var(--bg-panel-alt);border:1.5px solid var(--line);
+  border-radius:var(--radius-s);color:var(--text-hi);font-family:var(--font-body);font-size:14.5px;
+  padding:14px 16px;resize:vertical;outline:none;line-height:1.6;
+}
+textarea.answer-box.mono{font-family:var(--font-mono);font-size:13.5px;}
+textarea.answer-box:focus{border-color:var(--violet);box-shadow:0 0 0 3px rgba(157,123,255,0.16);}
+
+/* ---------- quiz ---------- */
+.quiz-progress-bar{width:100%;height:6px;background:var(--bg-panel-alt);border-radius:99px;overflow:hidden;}
+.quiz-progress-fill{height:100%;background:linear-gradient(100deg,var(--cyan),var(--violet));border-radius:99px;transition:width .3s ease;}
+.option-list{display:flex;flex-direction:column;gap:12px;}
+.option-btn{
+  display:flex;align-items:center;gap:14px;text-align:left;background:var(--bg-panel);
+  border:1.5px solid var(--line);border-radius:var(--radius-s);padding:15px 18px;color:var(--text-hi);
+  font-size:14.5px;transition:all .15s ease;
+}
+.option-btn:hover:not(:disabled){border-color:var(--violet);background:var(--bg-panel-alt);}
+.option-btn .letter{
+  width:30px;height:30px;border-radius:9px;background:var(--bg-panel-alt);color:var(--text-mid);
+  display:grid;place-items:center;font-family:var(--font-mono);font-weight:700;font-size:13px;flex-shrink:0;
+  border:1px solid var(--line-strong);
+}
+.option-btn.correct{border-color:var(--green);background:rgba(63,226,140,0.1);}
+.option-btn.correct .letter{background:var(--green);color:#08101A;}
+.option-btn.wrong{border-color:var(--rose);background:rgba(255,110,142,0.1);}
+.option-btn.wrong .letter{background:var(--rose);color:#08101A;}
+.option-btn:disabled{cursor:default;}
+.explain-box{display:none;font-size:13.5px;color:var(--text-mid);background:var(--bg-panel-alt);border-left:3px solid var(--cyan);padding:14px 16px;border-radius:8px;line-height:1.6;}
+.explain-box.show{display:block;}
+
+.result-hero{text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px 0;}
+.result-ring{
+  width:150px;height:150px;border-radius:50%;display:grid;place-items:center;
+  background:conic-gradient(var(--cyan) calc(var(--pct)*1%), var(--bg-panel-alt) 0);
+  margin-bottom:6px;
+}
+.result-ring::before{content:"";position:absolute;}
+.result-ring .inner{width:118px;height:118px;border-radius:50%;background:var(--bg-void);display:grid;place-items:center;flex-direction:column;}
+.result-ring .inner b{font-family:var(--font-display);font-size:30px;}
+.result-ring .inner span{font-size:11px;color:var(--text-dim);}
+
+.recap-row{display:flex;gap:14px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--line);}
+.recap-row:last-child{border-bottom:none;}
+.recap-icon{width:26px;height:26px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;font-size:13px;font-weight:800;}
+.recap-icon.ok{background:rgba(63,226,140,0.18);color:var(--green);}
+.recap-icon.no{background:rgba(255,110,142,0.18);color:var(--rose);}
+.recap-row .txt small{color:var(--text-dim);}
+
+/* ---------- refleksi ---------- */
+.mood-row{display:flex;gap:12px;flex-wrap:wrap;}
+.mood-btn{
+  flex:1;min-width:90px;background:var(--bg-panel);border:1.5px solid var(--line);border-radius:var(--radius-m);
+  padding:18px 8px;display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--text-mid);font-size:12px;font-weight:600;
+}
+.mood-btn .emo{font-size:26px;}
+.mood-btn.sel{border-color:var(--cyan);background:rgba(47,230,209,0.1);color:var(--text-hi);}
+
+/* ---------- misc ---------- */
+.pill-steps{display:flex;flex-wrap:wrap;gap:8px;}
+.pill-steps span{background:var(--bg-panel-alt);border:1px solid var(--line);padding:6px 12px;border-radius:999px;font-size:12.5px;color:var(--text-mid);}
+.divider-flow{display:flex;align-items:center;gap:10px;color:var(--text-dim);margin:6px 0;}
+.divider-flow::before,.divider-flow::after{content:"";flex:1;height:1px;background:var(--line);}
+
+.toast{
+  position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--bg-panel-raised);border:1px solid var(--cyan);color:var(--text-hi);
+  padding:13px 22px;border-radius:999px;font-size:13.5px;font-weight:600;z-index:200;
+  opacity:0;pointer-events:none;transition:all .3s ease;display:flex;align-items:center;gap:8px;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+footer.credit{color:var(--text-dim);font-size:12px;text-align:center;padding:6px 0 0;}
+.icon-btn{width:38px;height:38px;border-radius:10px;background:var(--bg-panel-alt);border:1px solid var(--line);color:var(--text-mid);display:grid;place-items:center;flex-shrink:0;}
+.icon-btn:hover{color:var(--cyan);border-color:var(--cyan);}
+
+@media(max-width:640px){
+  .slide{padding:30px 5vw 130px;}
+  .grid-2,.grid-3,.game-wrap{grid-template-columns:1fr;}
+  .lkpd-header{flex-direction:column;align-items:flex-start;}
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ============================================================
+       SCREEN 1 — LOGIN
+       ============================================================ -->
+  <div id="screen-login" class="screen active">
+    <div class="login-wrap">
+      <div class="login-visual">
+        <div class="brand">
+          <div class="brand-mark">AF</div>
+          <div class="brand-name">Algo<span>Flow</span></div>
+        </div>
+        <div class="flow-mini">
+          <div class="fm-shape fm-terminator">MULAI</div>
+          <div class="fm-arrow"></div>
+          <div class="fm-shape fm-io">Input N</div>
+          <div class="fm-arrow"></div>
+          <div class="fm-shape fm-decision"><span>N mod 2 = 0?</span></div>
+          <div class="fm-arrow"></div>
+          <div class="fm-shape fm-process">Cetak hasil</div>
+        </div>
+        <p class="quote"><b>Dasar-Dasar Pengembangan Perangkat Lunak &amp; Gim</b><br>Materi: Prinsip Dasar Algoritma — Varian &amp; Invarian, serta 3 Cara Penulisan Algoritma.</p>
+      </div>
+      <div class="login-form">
+        <div class="eyebrow">Media Pembelajaran Interaktif</div>
+        <h1>Selamat datang!<br>Yuk, mulai belajar algoritma 🚀</h1>
+        <p class="sub">Isi data diri kamu dulu untuk masuk ke ruang belajar.</p>
+        <form id="loginForm" novalidate>
+          <div class="field" style="margin-bottom:16px;">
+            <label for="inpNama">Nama Lengkap</label>
+            <input type="text" id="inpNama" placeholder="Tulis nama lengkapmu" autocomplete="off">
+          </div>
+          <div class="row-2" style="margin-bottom:10px;">
+            <div class="field">
+              <label for="inpAbsen">No. Absen</label>
+              <select id="inpAbsen"><option value="">Pilih</option></select>
+            </div>
+            <div class="field">
+              <label for="inpKelas">Kelas</label>
+              <select id="inpKelas">
+                <option value="">Pilih kelas</option>
+                <option value="X RPL 1">X RPL 1</option>
+                <option value="X RPL 2">X RPL 2</option>
+              </select>
+            </div>
+          </div>
+          <div class="error-msg" id="loginError"></div>
+          <button type="submit" class="btn btn-primary" style="width:100%;margin-top:6px;">Mulai Belajar →</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SCREEN 2 — MAIN (topbar + slide deck)
+       ============================================================ -->
+  <div id="screen-main" class="screen">
+    <nav class="topbar">
+      <div class="brand" id="btnHome" title="Beranda">
+        <div class="brand-mark">AF</div>
+        <div class="brand-name">Algo<span style="color:var(--cyan)">Flow</span></div>
+      </div>
+      <div class="topnav" id="topNav">
+        <button class="topnav-btn" data-goto="tujuan"><span class="num">1</span>Tujuan Pembelajaran</button>
+        <button class="topnav-btn" data-goto="materi"><span class="num">2</span>Materi</button>
+        <button class="topnav-btn" data-goto="contoh"><span class="num">3</span>Contoh / Media</button>
+        <button class="topnav-btn" data-goto="lkpd"><span class="num">4</span>LKPD</button>
+        <button class="topnav-btn" data-goto="kuis"><span class="num">5</span>Kuis</button>
+        <button class="topnav-btn" data-goto="refleksi"><span class="num">6</span>Refleksi</button>
+      </div>
+      <div class="student-chip">
+        <div class="avatar" id="chipAvatar">?</div>
+        <div class="info"><b id="chipNama">—</b><span id="chipMeta">—</span></div>
+      </div>
+    </nav>
+
+    <div class="slides-viewport" id="viewport">
+
+      <!-- HOME / MENU -->
+      <section class="slide" data-section="home" data-role="home">
+        <div class="slide-inner">
+          <div class="home-hero">
+            <div class="eyebrow">Ruang Belajar · <span id="homeKelas">X RPL</span></div>
+            <h1>Halo, <span id="homeNama">Siswa</span> 👋<br>Yuk jelajahi <span>Algoritma</span> hari ini</h1>
+            <p>Pilih salah satu menu di bawah untuk mulai, atau ikuti urutannya dari atas ke bawah agar alur belajarmu runtut.</p>
+          </div>
+          <div class="menu-grid">
+            <button class="menu-card" data-goto="tujuan">
+              <div class="ic" style="background:rgba(47,230,209,.15);color:var(--cyan);">🎯</div>
+              <b>Tujuan Pembelajaran</b>
+              <small>Apa yang akan kamu kuasai setelah sesi ini.</small>
+            </button>
+            <button class="menu-card" data-goto="materi">
+              <div class="ic" style="background:rgba(157,123,255,.15);color:var(--violet);">📘</div>
+              <b>Materi</b>
+              <small>Algoritma, 3 cara penulisan, varian & invarian.</small>
+            </button>
+            <button class="menu-card" data-goto="contoh">
+              <div class="ic" style="background:rgba(255,185,77,.15);color:var(--amber);">🧩</div>
+              <b>Contoh / Media</b>
+              <small>Simbol flowchart + game susun flowchart.</small>
+            </button>
+            <button class="menu-card" data-goto="lkpd">
+              <div class="ic" style="background:rgba(255,110,142,.15);color:var(--rose);">📝</div>
+              <b>LKPD</b>
+              <small>Lembar kerja untuk mengasah pemahamanmu.</small>
+            </button>
+            <button class="menu-card" data-goto="kuis">
+              <div class="ic" style="background:rgba(63,226,140,.15);color:var(--green);">✅</div>
+              <b>Kuis</b>
+              <small>5 soal interaktif + pembahasan langsung.</small>
+            </button>
+          </div>
+          <div class="divider-flow" style="margin-top:10px;"><span style="font-family:var(--font-mono);font-size:11.5px;">alur belajar mendalam</span></div>
+          <div class="pill-steps" style="justify-content:center;display:flex;">
+            <span>🌱 Memahami</span><span>⚙️ Mengaplikasi</span><span>💭 Merefleksi</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============== TUJUAN PEMBELAJARAN (1 slide) ============== -->
+      <section class="slide" data-section="tujuan">
+        <div class="slide-inner">
+          <div class="slide-head">
+            <div class="eyebrow">01 · Tujuan Pembelajaran</div>
+            <h2>Setelah mempelajari topik ini, kamu mampu:</h2>
+            <p class="desc">Capaian belajar untuk topik <b>Prinsip Dasar Algoritma Pemrograman</b> — Fase E, Dasar-Dasar Pengembangan Perangkat Lunak &amp; Gim.</p>
+          </div>
+          <div class="objective-list">
+            <div class="objective-item">
+              <div class="idx">01</div>
+              <div><b>Menjelaskan pengertian algoritma</b><p>Siswa mampu mengidentifikasi dan memahami konsep dasar algoritma sebagai urutan langkah logis dalam menyelesaikan masalah.</p></div>
+            </div>
+            <div class="objective-item">
+              <div class="idx">02</div>
+              <div><b>Membedakan 3 cara penulisan algoritma</b><p>Siswa mampu membandingkan penulisan algoritma dalam bentuk kalimat deskriptif, flowchart (diagram alur), dan pseudocode.</p></div>
+            </div>
+            <div class="objective-item">
+              <div class="idx">03</div>
+              <div><b>Menganalisis varian dan invarian pada perulangan</b><p>Siswa mampu mengidentifikasi variabel varian (menjamin loop berakhir) dan kondisi invarian (tetap benar di setiap iterasi) pada sebuah algoritma perulangan.</p></div>
+            </div>
+            <div class="objective-item">
+              <div class="idx">04</div>
+              <div><b>Menerapkan simbol flowchart dengan tepat</b><p>Siswa mampu menyusun flowchart sederhana menggunakan simbol terminator, proses, keputusan, dan input/output secara benar.</p></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============== MATERI (7 slides) ============== -->
+      <section class="slide" data-section="materi">
+        <div class="slide-inner">
+          <div class="slide-head">
+            <div class="eyebrow">02 · Materi — 1/7</div>
+            <h2>Apa itu Algoritma?</h2>
+          </div>
+          <div class="card">
+            <p style="font-size:16px;color:var(--text-hi);">Algoritma adalah <b>urutan langkah-langkah logis dan sistematis</b> yang disusun untuk menyelesaikan suatu masalah atau mencapai tujuan tertentu, dalam jumlah langkah yang terbatas (finite).</p>
+          </div>
+          <div class="grid-3">
+            <div class="card">
+              <div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Tepat</div>
+              <p style="color:var(--text-mid);font-size:13.5px;">Setiap langkah harus jelas dan tidak menimbulkan makna ganda (ambigu).</p>
+            </div>
+            <div class="card">
+              <div class="card-title"><span class="dot" style="background:var(--violet)"></span>Berurutan</div>
+              <p style="color:var(--text-mid);font-size:13.5px;">Langkah dikerjakan sesuai urutan logis, dari awal hingga akhir.</p>
+            </div>
+            <div class="card">
+              <div class="card-title"><span class="dot" style="background:var(--amber)"></span>Berhenti</div>
+              <p style="color:var(--text-mid);font-size:13.5px;">Algoritma harus berakhir setelah sejumlah langkah tertentu — tidak berjalan selamanya.</p>
+            </div>
+          </div>
+          <div class="card" style="background:var(--bg-panel-alt);">
+            <p style="font-size:13.5px;color:var(--text-mid);">💡 <b style="color:var(--text-hi);">Analogi sederhana:</b> resep membuat mi instan adalah sebuah algoritma — didihkan air, masukkan mi, tunggu 3 menit, tiriskan, campur bumbu, sajikan. Urutannya jelas, logis, dan pasti berhenti.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-section="materi">
+        <div class="slide-inner">
+          <div class="slide-head">
+            <div class="eyebrow">02 · Materi — 2/7</div>
+            <h2>Cara #1 — Kalimat Deskriptif</h2>
+            <p class="desc">Algoritma ditulis menggunakan kalimat/bahasa sehari-hari (bahasa natural) secara berurutan.</p>
+          </div>
+          <div class="card">
+            <div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Contoh: Algoritma Menentukan Bilangan Genap/Ganjil</div>
+            <ol style="margin:0;padding-left:22px;color:var(--text-mid);font-size:14.5px;line-height:2;">
+              <li>Mulai.</li>
+              <li>Masukkan sebuah bilangan bulat N.</li>
+              <li>Bagi N dengan 2, lalu perhatikan sisa baginya.</li>
+              <li>Jika sisa baginya sama dengan 0, maka N adalah bilangan <b style="color:var(--text-hi)">genap</b>.</li>
+              <li>Jika tidak, maka N adalah bilangan <b style="color:var(--text-hi)">ganjil</b>.</li>
+              <li>Tampilkan hasilnya.</li>
+              <li>Selesai.</li>
+            </ol>
+          </div>
+          <div class="card" style="background:var(--bg-panel-alt);">
+            <p style="font-size:13.5px;color:var(--text-mid);">✅ <b style="color:var(--green)">Kelebihan:</b> mudah dipahami siapa saja, tanpa perlu tahu simbol atau sintaks tertentu.<br>⚠️ <b style="color:var(--amber)">Kekurangan:</b> bisa jadi panjang dan kurang presisi untuk algoritma yang kompleks.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-section="materi">
+        <div class="slide-inner">
+          <div class="slide-head">
+            <div class="eyebrow">02 · Materi — 3/7</div>
+            <h2>Cara #2 — Flowchart (Diagram Alur)</h2>
+            <p class="desc">Algoritma digambarkan menggunakan simbol-simbol standar yang dihubungkan dengan garis alur (panah).</p>
+          </div>
+          <div class="card">
+            <div class="symbol-row">
+              <div class="sym sym-terminator">MULAI/SELESAI</div>
+              <div class="meta"><b>Terminator</b><span>Menandai awal dan akhir sebuah algoritma/program.</span></div>
+            </div>
+            <div class="symbol-row">
+              <div class="sym sym-io"><span>INPUT/OUTPUT</span></div>
+              <div class="meta"><b>Input / Output</b><span>Menyatakan proses pemasukan atau penampilan data.</span></div>
+            </div>
+            <div class="symbol-row">
+              <div class="sym sym-process">PROSES</div>
+              <div class="meta"><b>Process</b><span>Menyatakan proses pengolahan atau perhitungan data.</span></div>
+            </div>
+            <div class="symbol-row">
+              <div class="sym sym-decision"><span>YA / TIDAK?</span></div>
+              <div class="meta"><b>Decision</b><span>Menyatakan percabangan atau pengambilan keputusan.</span></div>
+            </div>
+          </div>
+          <div class="card" style="background:var(--bg-panel-alt);">
+            <p style="font-size:13.5px;color:var(--text-mid);">🧩 Ingin coba menyusun sendiri? Lanjut ke menu <b style="color:var(--cyan)">Contoh / Media</b> untuk memainkan game susun flowchart!</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-section="materi">
+        <div class="slide-inner">
+          <div class="slide-head">
+            <div class="eyebrow">02 · Materi — 4/7</div>
+            <h2>Cara #3 — Pseudocode</h2>
+            <p class="desc">Algoritma ditulis menyerupai kode program, tetapi tidak terikat pada aturan (sintaks) bahasa pemrograman tertentu.</p>
+          </div>
+          <div class="card">
+            <div class="card-title"><span class="dot" style="background:var(--violet)"></span>Contoh: Genap/Ganjil dalam Pseudocode</div>
+            <pre class="code-block"><span class="kw">MULAI</span>
+  <span class="fn">Input</span> N
+  <span class="kw">JIKA</span> N <span class="kw">mod</span> 2 = 0 <span class="kw">MAKA</span>
+      <span class="fn">Output</span> <span class="cm">"Genap"</span>
+  <span class="kw">JIKA TIDAK</span>
+      <span class="fn">Output</span> <span class="cm">"Ganjil"</span>
+  <span class="kw">AKHIR JIKA</span>
+<span class="kw">SELESAI</span></pre>
+          </div>
+          <div class="card" style="background:var(--bg-panel-alt);">
+            <p style="font-size:13.5px;color:var(--text-mid);">💡 Pseudocode adalah "jembatan" antara bahasa manusia dan bahasa pemrograman sungguhan (seperti Python, Java, atau C++) — lebih presisi dari kalimat deskriptif, tapi lebih fleksibel dari kode asli.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-section="materi">
+        <div class="slide-inner">
+          <div class="slide-head">
+            <div class="eyebrow">02 · Materi — 5/7</div>
+            <h2>Varian &amp; Invarian dalam Perulangan</h2>
+            <p class="desc">Dua konsep penting untuk memastikan sebuah <b>loop (perulangan)</b> bekerja dengan benar dan pasti berhenti.</p>
+          </div>
+          <div class="grid-2">
+            <div class="card" style="border-color:rgba(255,185,77,.4);">
+              <div class="card-title"><span class="dot" style="background:var(--amber)"></span>Varian (Variant)</div>
+              <p style="color:var(--text-mid);font-size:14px;">Ekspresi/nilai yang <b style="color:var(--text-hi)">berubah secara konsisten</b> (biasanya menurun) di setiap iterasi, dan menuju suatu batas berhenti.</p>
+              <p style="color:var(--text-mid);font-size:13px;margin-top:10px;">🎯 Fungsinya: <b style="color:var(--amber)">menjamin loop pasti berakhir</b> — mencegah perulangan tak terhingga (infinite loop).</p>
+            </div>
+            <div class="card" style="border-color:rgba(47,230,209,.4);">
+              <div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Invarian (Invariant)</div>
+              <p style="color:var(--text-mid);font-size:14px;">Kondisi atau pernyataan yang <b style="color:var(--text-hi)">selalu bernilai benar</b> di awal setiap iterasi, sebelum maupun sesudah loop berjalan.</p>
+              <p style="color:var(--text-mid);font-size:13px;margin-top:10px;">🎯 Fungsinya: <b style="color:var(--cyan)">membuktikan bahwa algoritma berjalan benar</b> — hasil akhirnya sesuai yang diharapkan.</p>
+            </div>
+          </div>
+          <div class="card" style="background:var(--bg-panel-alt);">
+            <p style="font-size:13.5px;color:var(--text-mid);">🧠 <b style="color:var(--text-hi)">Ingat:</b> Varian menjawab pertanyaan <i>"kapan loop ini berhenti?"</i>, sedangkan Invarian menjawab pertanyaan <i>"apakah loop ini selalu bekerja dengan benar?"</i></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-section="materi">
+        <div class="slide-inner">
+          <div class="slide-head">
+            <div class="eyebrow">02 · Materi — 6/7</div>
+            <h2>Studi Kasus: Algoritma Faktorial (N!)</h2>
+            <p class="desc">Mari telusuri varian dan invarian pada algoritma menghitung faktorial dari N = 4.</p>
+          </div>
+          <div class="card">
+            <pre class="code-block"><span class="kw">MULAI</span>
+  <span class="fn">Input</span> N
+  hasil ← <span class="num">1</span>
+  i ← <span class="num">1</span>
+  <span class="kw">SELAMA</span> i <= N <span class="kw">LAKUKAN</span>
+      hasil ← hasil * i
+      i ← i + <span class="num">1</span>
+  <span class="kw">AKHIR SELAMA</span>
+  <span class="fn">Output</span> hasil
+<span class="kw">SELESAI</span></pre>
+          </div>
+          <div class="card">
+            <div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Tabel Lacak (Trace Table) untuk N = 4</div>
+            <table class="data-table">
+              <thead><tr><th>Iterasi</th><th>i</th><th>hasil</th><th>Invarian: hasil = (i−1)!</th><th>Varian: N − i</th></tr></thead>
+              <tbody>
+                <tr><td>Awal</td><td class="hi">1</td><td class="hi">1</td><td>1 = 0! ✓</td><td>3</td></tr>
+                <tr><td>1</td><td class="hi">2</td><td class="hi">1</td><td>1 = 1! ✓</td><td>2</td></tr>
+                <tr><td>2</td><td class="hi">3</td><td class="hi">2</td><td>2 = 2! ✓</td><td>1</td></tr>
+                <tr><td>3</td><td class="hi">4</td><td class="hi">6</td><td>6 = 3! ✓</td><td>0</td></tr>
+                <tr><td>4 (berhenti)</td><td class="hi">5</td><td class="hi">24</td><td>24 = 4! ✓</td><td>−1 → loop berhenti</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="card" style="background:var(--bg-panel-alt);">
+            <p style="font-size:13.5px;color:var(--text-mid);">📌 <b style="color:var(--amber)">Varian</b>-nya adalah nilai <code>(N − i)</code> yang terus <b>berkurang</b> tiap iterasi menuju 0 — ini menjamin loop pasti berhenti.<br>📌 <b style="color:var(--cyan)">Invarian</b>-nya adalah pernyataan <code>hasil = (i−1)!</code> yang <b>selalu benar</b> di setiap awal iterasi — ini membuktikan hasil akhirnya pasti benar.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-section="materi">
+        <div class="slide-inner">
+          <div class="slide-head">
+            <div class="eyebrow">02 · Materi — 7/7</div>
+            <h2>Video Pembelajaran</h2>
+            <p class="desc">Tonton video berikut untuk memperkuat pemahamanmu tentang algoritma, varian, dan invarian.</p>
+          </div>
+          <div class="video-frame" id="videoSlot">
+            <div class="play">▶</div>
+            <b style="color:var(--text-hi);font-size:14.5px;">Tempat tautan video pembelajaran</b>
+            <span style="font-size:12.5px;max-width:380px;">Ganti bagian ini dengan embed YouTube/Google Drive, misalnya:<br><code class="mono" style="font-size:11px;">&lt;iframe src="https://www.youtube.com/embed/ID_VIDEO"&gt;&lt;/iframe&gt;</code></span>
+          </div>
+          <div class="card" style="background:var(--bg-panel-alt);">
+            <p style="font-size:13.5px;color:var(--text-mid);">📎 Guru dapat menyematkan video penjelasan algoritma, animasi flowchart, atau simulasi trace table di ruang ini.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============== CONTOH / MEDIA (2 slides) ============== -->
+      <section class="slide" data-section="contoh">
+        <div class="slide-inner">
+          <div class="slide-head">
+            <div class="eyebrow">03 · Contoh / Media — 1/2</div>
+            <h2>Saatnya Bermain: Susun Flowchart! 🧩</h2>
+            <p class="desc">Kamu akan menyusun flowchart untuk algoritma <b>"Menentukan Bilangan Genap atau Ganjil"</b> dengan menyeret (drag) simbol ke posisi yang tepat.</p>
+          </div>
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Cara Bermain</div>
+              <ol style="margin:0;padding-left:20px;color:var(--text-mid);font-size:14px;line-height:2;">
+                <li>Seret setiap kartu simbol dari kotak sebelah kanan.</li>
+                <li>Lepaskan pada slot kotak-kotak putus-putus sesuai urutan alur yang benar.</li>
+                <li>Klik <b style="color:var(--text-hi)">Periksa Jawaban</b> untuk melihat hasilnya.</li>
+                <li>Slot benar akan bertanda hijau, yang salah bertanda merah — kamu boleh mencoba lagi!</li>
+              </ol>
+            </div>
+            <div class="card">
+              <div class="card-title"><span class="dot" style="background:var(--amber)"></span>Ingat kembali simbolnya</div>
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <div style="display:flex;align-items:center;gap:10px;"><div class="piece p-terminator" style="width:70px;height:26px;font-size:9px;">TERMINATOR</div><span style="font-size:12.5px;color:var(--text-mid);">mulai/selesai</span></div>
+                <div style="display:flex;align-items:center;gap:10px;"><div class="piece p-io" style="width:70px;height:26px;font-size:9px;">I/O</div><span style="font-size:12.5px;color:var(--text-mid);">input/output</span></div>
+                <div style="display:flex;align-items:center;gap:10px;"><div class="piece p-decision" style="width:70px;height:26px;font-size:9px;">DECISION</div><span style="font-size:12.5px;color:var(--text-mid);">percabangan</span></div>
+                <div style="display:flex;align-items:center;gap:10px;"><div class="piece p-process" style="width:70px;height:26px;font-size:9px;">PROCESS</div><span style="font-size:12.5px;color:var(--text-mid);">proses</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-section="contoh">
+        <div class="slide-inner">
+          <div class="slide-head">
+            <div class="eyebrow">03 · Contoh / Media — 2/2</div>
+            <h2>Game: Susun Flowchart Genap/Ganjil</h2>
+          </div>
+          <div class="game-wrap">
+            <div class="game-board">
+              <div class="dropzone" data-answer="terminator-mulai"><span class="zone-label">1</span></div>
+              <div class="zone-arrow"></div>
+              <div class="dropzone" data-answer="io-input"><span class="zone-label">2</span></div>
+              <div class="zone-arrow"></div>
+              <div class="dropzone" data-answer="decision"><span class="zone-label">3</span></div>
+              <div class="zone-arrow"></div>
+              <div class="dropzone" data-answer="process-genap"><span class="zone-label">4</span></div>
+              <div class="zone-arrow"></div>
+              <div class="dropzone" data-answer="process-ganjil"><span class="zone-label">5</span></div>
+              <div class="zone-arrow"></div>
+              <div class="dropzone" data-answer="terminator-selesai"><span class="zone-label">6</span></div>
+            </div>
+            <div class="game-panel">
+              <div class="game-status">
+                <div class="lbl">Kartu Simbol (seret ke papan)</div>
+                <div class="piece-tray" id="pieceTray" style="margin-top:12px;"></div>
+              </div>
+              <div class="game-status">
+                <div class="lbl">Status</div>
+                <div class="score" id="gameScore">0/6</div>
+                <div id="gameFeedback" class="feedback-msg"></div>
+                <div style="display:flex;gap:10px;margin-top:14px;">
+                  <button class="btn btn-primary" id="btnCheckGame" style="flex:1;padding:11px;font-size:13px;">Periksa Jawaban</button>
+                  <button class="btn btn-ghost" id="btnResetGame" style="padding:11px 16px;font-size:13px;">Ulang</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============== LKPD (3 slides) ============== -->
+      <section class="slide" data-section="lkpd">
+        <div class="slide-inner">
+          <div class="slide-head">
+            <div class="eyebrow">04 · LKPD — 1/3</div>
+            <h2>Lembar Kerja Peserta Didik</h2>
+            <p class="desc">Topik: Prinsip Dasar Algoritma Pemrograman — Varian, Invarian &amp; 3 Cara Penulisan Algoritma.</p>
+          </div>
+          <div class="lkpd-header">
+            <div class="id-item">Nama<b id="lkpdNama">—</b></div>
+            <div class="id-item">Kelas<b id="lkpdKelas">—</b></div>
+            <div class="id-item">No. Absen<b id="lkpdAbsen">—</b></div>
+            <div class="id-item">Tanggal<b id="lkpdTanggal">—</b></div>
+          </div>
+          <div class="card" style="background:var(--bg-panel-alt);">
+            <div class="card-title"><span class="dot" style="background:var(--rose)"></span>Petunjuk Pengerjaan</div>
+            <ol style="margin:0;padding-left:20px;color:var(--text-mid);font-size:14px;line-height:1.9;">
+              <li>Kerjakan setiap soal pada kotak jawaban yang tersedia.</li>
+              <li>Gunakan bahasamu sendiri, boleh berdiskusi tetapi jawaban tetap individu.</li>
+              <li>Setelah selesai, tekan tombol <b style="color:var(--text-hi)">"Unduh Jawaban"</b> di halaman terakhir LKPD untuk menyimpan hasil kerjamu, lalu kumpulkan ke guru.</li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-section="lkpd">
+        <div class="slide-inner">
+          <div class="slide-head">
+            <div class="eyebrow">04 · LKPD — 2/3</div>
+            <h2>Latihan: Cara Penulisan Algoritma</h2>
+          </div>
+          <div class="card question-block">
+            <div class="qhead"><div class="qnum">1</div><b style="font-size:15px;">Tuliskan algoritma "Menghitung luas persegi panjang" dalam bentuk <span style="color:var(--cyan)">kalimat deskriptif</span>.</b></div>
+            <textarea class="answer-box" id="lkpdQ1" placeholder="Tulis jawabanmu di sini..."></textarea>
+          </div>
+          <div class="card question-block">
+            <div class="qhead"><div class="qnum">2</div><b style="font-size:15px;">Ubah algoritma pada soal nomor 1 ke dalam bentuk <span style="color:var(--violet)">pseudocode</span>.</b></div>
+            <textarea class="answer-box mono" id="lkpdQ2" placeholder="MULAI&#10;  ...&#10;SELESAI"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-section="lkpd">
+        <div class="slide-inner">
+          <div class="slide-head">
+            <div class="eyebrow">04 · LKPD — 3/3</div>
+            <h2>Latihan: Varian &amp; Invarian</h2>
+          </div>
+          <div class="card">
+            <div class="card-title"><span class="dot" style="background:var(--amber)"></span>Perhatikan potongan pseudocode berikut</div>
+            <pre class="code-block"><span class="kw">MULAI</span>
+  <span class="fn">Input</span> N
+  total ← <span class="num">0</span>
+  k ← <span class="num">1</span>
+  <span class="kw">SELAMA</span> k <= N <span class="kw">LAKUKAN</span>
+      total ← total + k
+      k ← k + <span class="num">1</span>
+  <span class="kw">AKHIR SELAMA</span>
+  <span class="fn">Output</span> total
+<span class="kw">SELESAI</span></pre>
+          </div>
+          <div class="card question-block">
+            <div class="qhead"><div class="qnum">3</div><b style="font-size:15px;">Menurutmu, manakah yang menjadi <span style="color:var(--amber)">varian</span> dan mana yang menjadi <span style="color:var(--cyan)">invarian</span> dari perulangan di atas? Jelaskan alasanmu.</b></div>
+            <textarea class="answer-box" id="lkpdQ3" placeholder="Tulis jawabanmu di sini..."></textarea>
+          </div>
+          <div class="card question-block">
+            <div class="qhead"><div class="qnum">4</div><b style="font-size:15px;">Apa yang akan terjadi jika sebuah loop tidak memiliki varian yang benar (nilainya tidak pernah menuju kondisi berhenti)? Jelaskan dengan bahasamu sendiri.</b></div>
+            <textarea class="answer-box" id="lkpdQ4" placeholder="Tulis jawabanmu di sini..."></textarea>
+          </div>
+          <button class="btn btn-primary" id="btnDownloadLkpd" style="align-self:flex-start;">⬇ Unduh Jawaban (.txt)</button>
+        </div>
+      </section>
+
+      <!-- ============== KUIS (dynamic — generated by JS) ============== -->
+      <div id="quizSlot"></div>
+
+      <!-- ============== REFLEKSI ============== -->
+      <section class="slide" data-section="refleksi">
+        <div class="slide-inner">
+          <div class="slide-head">
+            <div class="eyebrow">06 · Refleksi Pembelajaran</div>
+            <h2>Yuk, Refleksikan Perjalanan Belajarmu 💭</h2>
+            <p class="desc">Bagian dari alur pembelajaran mendalam: <b>Memahami → Mengaplikasi → Merefleksi.</b> Jawaban jujur kamu membantu proses belajar berikutnya.</p>
+          </div>
+          <div class="card">
+            <div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Bagaimana perasaanmu setelah belajar materi ini?</div>
+            <div class="mood-row" id="moodRow">
+              <button class="mood-btn" data-mood="Sangat paham"><span class="emo">🤩</span>Sangat paham</button>
+              <button class="mood-btn" data-mood="Cukup paham"><span class="emo">🙂</span>Cukup paham</button>
+              <button class="mood-btn" data-mood="Masih bingung"><span class="emo">😕</span>Masih bingung</button>
+              <button class="mood-btn" data-mood="Butuh bimbingan"><span class="emo">🤔</span>Butuh bimbingan</button>
+            </div>
+          </div>
+          <div class="card question-block">
+            <div class="qhead"><div class="qnum">R1</div><b style="font-size:15px;">Apa satu hal baru yang paling kamu pahami hari ini?</b></div>
+            <textarea class="answer-box" id="refQ1" placeholder="Tulis refleksimu..."></textarea>
+          </div>
+          <div class="card question-block">
+            <div class="qhead"><div class="qnum">R2</div><b style="font-size:15px;">Bagian mana yang masih membingungkan bagimu?</b></div>
+            <textarea class="answer-box" id="refQ2" placeholder="Tulis refleksimu..."></textarea>
+          </div>
+          <div class="card question-block">
+            <div class="qhead"><div class="qnum">R3</div><b style="font-size:15px;">Bagaimana kamu akan menerapkan konsep varian &amp; invarian saat menulis program nanti?</b></div>
+            <textarea class="answer-box" id="refQ3" placeholder="Tulis refleksimu..."></textarea>
+          </div>
+          <button class="btn btn-primary" id="btnFinishRef" style="align-self:flex-start;">Selesai Refleksi ✓</button>
+        </div>
+      </section>
+
+      <!-- ============== PENUTUP ============== -->
+      <section class="slide" data-section="penutup">
+        <div class="slide-inner" style="align-items:center;text-align:center;">
+          <div style="font-size:46px;">🎉</div>
+          <h2 style="font-size:clamp(24px,4vw,36px);">Kerja bagus, <span id="closingNama" style="color:var(--cyan)">Siswa</span>!</h2>
+          <p style="color:var(--text-mid);max-width:520px;">Kamu telah menyelesaikan sesi belajar <b style="color:var(--text-hi)">Prinsip Dasar Algoritma Pemrograman</b>. Teruslah berlatih menulis algoritma dan mengenali varian-invariannya — ini adalah fondasi penting sebelum menulis kode program sungguhan.</p>
+          <div class="pill-steps" style="justify-content:center;display:flex;">
+            <span>🎯 Tujuan ✓</span><span>📘 Materi ✓</span><span>🧩 Game ✓</span><span>📝 LKPD ✓</span><span>✅ Kuis ✓</span><span>💭 Refleksi ✓</span>
+          </div>
+          <button class="btn btn-ghost" id="btnBackHome" style="margin-top:10px;">← Kembali ke Beranda</button>
+          <footer class="credit">AlgoFlow — Media Pembelajaran Interaktif · Dasar-Dasar Pengembangan Perangkat Lunak &amp; Gim<br>Disusun oleh Pande Made Mahendri Pramadewi, S.Pd — Program Wardah Inspiring Teacher Generasi 8</footer>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="bottom-nav">
+      <button class="nav-arrow" id="btnPrev">‹</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="nav-arrow" id="btnNext">›</button>
+      <div class="nav-label" id="navLabel">1 / 1</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   STATE (in-memory only — sesuai kebutuhan single-page session)
+   ============================================================ */
+var student = { nama:"", absen:"", kelas:"" };
+
+/* ============================================================
+   1. LOGIN
+   ============================================================ */
+var absenSelect = document.getElementById('inpAbsen');
+for (var i=1;i<=36;i++){
+  var opt = document.createElement('option');
+  opt.value = i; opt.textContent = i;
+  absenSelect.appendChild(opt);
+}
+
+document.getElementById('loginForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  var nama = document.getElementById('inpNama').value.trim();
+  var absen = document.getElementById('inpAbsen').value;
+  var kelas = document.getElementById('inpKelas').value;
+  var errEl = document.getElementById('loginError');
+  if(!nama || !absen || !kelas){
+    errEl.textContent = "Lengkapi semua data terlebih dahulu ya!";
+    return;
+  }
+  errEl.textContent = "";
+  student.nama = nama; student.absen = absen; student.kelas = kelas;
+  fillStudentInfo();
+  document.getElementById('screen-login').classList.remove('active');
+  document.getElementById('screen-main').classList.add('active');
+  initDeckIfNeeded();
+  goToSection('home');
+});
+
+function initials(name){
+  var parts = name.trim().split(/\s+/);
+  var s = parts[0] ? parts[0][0] : "?";
+  if(parts.length>1) s += parts[parts.length-1][0];
+  return s.toUpperCase();
+}
+
+function fillStudentInfo(){
+  document.getElementById('chipAvatar').textContent = initials(student.nama);
+  document.getElementById('chipNama').textContent = student.nama;
+  document.getElementById('chipMeta').textContent = student.kelas + " · No. " + student.absen;
+  document.getElementById('homeNama').textContent = student.nama.split(' ')[0];
+  document.getElementById('homeKelas').textContent = student.kelas;
+  document.getElementById('lkpdNama').textContent = student.nama;
+  document.getElementById('lkpdKelas').textContent = student.kelas;
+  document.getElementById('lkpdAbsen').textContent = student.absen;
+  document.getElementById('lkpdTanggal').textContent = new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('closingNama').textContent = student.nama.split(' ')[0];
+}
+
+/* ============================================================
+   2. QUIZ — data-driven generation
+   ============================================================ */
+var quizData = [
+  {
+    q:"Apa yang dimaksud dengan algoritma?",
+    opts:["Bahasa pemrograman tertentu","Urutan langkah logis dan sistematis untuk menyelesaikan suatu masalah","Program yang sudah dikompilasi menjadi file .exe","Diagram struktur basis data"],
+    correct:1,
+    explain:"Algoritma adalah urutan langkah-langkah logis dan sistematis untuk menyelesaikan masalah, bukan bahasa pemrograman atau hasil kompilasi tertentu."
+  },
+  {
+    q:"Berikut ini yang termasuk salah satu dari 3 cara penulisan algoritma adalah...",
+    opts:["Bahasa mesin (machine code)","Pseudocode","Compiler","Debugger"],
+    correct:1,
+    explain:"3 cara penulisan algoritma adalah kalimat deskriptif, flowchart, dan pseudocode. Bahasa mesin, compiler, dan debugger bukan cara penulisan algoritma."
+  },
+  {
+    q:"Dalam sebuah perulangan (loop), invarian adalah...",
+    opts:["Nilai yang selalu berubah setiap iterasi","Kondisi/pernyataan yang tetap benar di setiap awal iterasi loop","Jumlah maksimal iterasi yang diperbolehkan","Nama lain dari output program"],
+    correct:1,
+    explain:"Invarian adalah kondisi yang selalu bernilai benar di setiap awal iterasi — ini membuktikan bahwa loop bekerja dengan benar."
+  },
+  {
+    q:"Fungsi utama variabel varian (variant) dalam algoritma perulangan adalah...",
+    opts:["Menyimpan hasil akhir program","Menjamin nilainya terus berubah (biasanya berkurang) menuju kondisi berhenti, sehingga loop pasti berakhir","Menampilkan pesan galat (error)","Menentukan bahasa pemrograman yang digunakan"],
+    correct:1,
+    explain:"Varian menjamin sebuah loop pasti berakhir, karena nilainya terus berubah secara konsisten menuju batas berhenti — mencegah infinite loop."
+  },
+  {
+    q:"Simbol flowchart berbentuk belah ketupat (diamond) digunakan untuk menyatakan...",
+    opts:["Mulai/berakhirnya program (terminator)","Proses perhitungan atau pengolahan data","Percabangan / pengambilan keputusan (decision)","Input atau output data"],
+    correct:2,
+    explain:"Simbol belah ketupat (diamond) pada flowchart adalah simbol Decision, digunakan untuk percabangan atau pengambilan keputusan."
+  }
+];
+
+var quizSlot = document.getElementById('quizSlot');
+var quizAnswers = new Array(quizData.length).fill(null);
+var letters = ['A','B','C','D'];
+
+function buildQuiz(){
+  var html = "";
+  html += '<section class="slide" data-section="kuis"><div class="slide-inner">'
+        + '<div class="slide-head"><div class="eyebrow">05 · Kuis Interaktif</div><h2>Uji Pemahamanmu 🚀</h2>'
+        + '<p class="desc">5 soal pilihan ganda seputar algoritma, varian, invarian, dan flowchart. Pilih jawaban lalu lihat pembahasannya langsung.</p></div>'
+        + '<div class="card"><div class="quiz-progress-bar"><div class="quiz-progress-fill" style="width:0%"></div></div></div>'
+        + '<div class="grid-3">'
+        + '<div class="card"><div class="card-title"><span class="dot" style="background:var(--cyan)"></span>5 Soal</div><p style="color:var(--text-mid);font-size:13px;">Pilihan ganda, satu jawaban benar.</p></div>'
+        + '<div class="card"><div class="card-title"><span class="dot" style="background:var(--violet)"></span>Pembahasan</div><p style="color:var(--text-mid);font-size:13px;">Muncul otomatis setelah kamu menjawab.</p></div>'
+        + '<div class="card"><div class="card-title"><span class="dot" style="background:var(--amber)"></span>Skor Akhir</div><p style="color:var(--text-mid);font-size:13px;">Rekap &amp; kunci jawaban di halaman terakhir.</p></div>'
+        + '</div></div></section>';
+
+  quizData.forEach(function(item, idx){
+    html += '<section class="slide" data-section="kuis" data-qidx="'+idx+'"><div class="slide-inner">'
+          + '<div class="slide-head"><div class="eyebrow">05 · Kuis — Soal '+(idx+1)+'/5</div><h2>'+escapeHtml(item.q)+'</h2></div>'
+          + '<div class="option-list" data-qi="'+idx+'">';
+    item.opts.forEach(function(opt, oi){
+      html += '<button class="option-btn" data-oi="'+oi+'"><span class="letter">'+letters[oi]+'</span><span>'+escapeHtml(opt)+'</span></button>';
+    });
+    html += '</div><div class="explain-box" id="explain-'+idx+'"><b style="color:var(--text-hi);">Pembahasan:</b> '+escapeHtml(item.explain)+'</div>'
+          + '</div></section>';
+  });
+
+  html += '<section class="slide" data-section="kuis" data-role="quizresult"><div class="slide-inner">'
+        + '<div class="slide-head"><div class="eyebrow">05 · Kuis — Hasil</div><h2>Rekap Hasil Kuismu</h2></div>'
+        + '<div class="result-hero">'
+        + '<div class="result-ring" id="resultRing" style="--pct:0;"><div class="inner"><b id="resultScoreTxt">0/5</b><span>BENAR</span></div></div>'
+        + '<b id="resultTitle" style="font-size:18px;">—</b>'
+        + '</div>'
+        + '<div class="card"><div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Kunci Jawaban &amp; Pembahasan</div><div id="resultRecap"></div></div>'
+        + '</div></section>';
+
+  quizSlot.innerHTML = html;
+
+  // bind option buttons
+  quizData.forEach(function(item, idx){
+    var list = quizSlot.querySelector('.option-list[data-qi="'+idx+'"]');
+    var btns = list.querySelectorAll('.option-btn');
+    btns.forEach(function(btn){
+      btn.addEventListener('click', function(){
+        if(quizAnswers[idx] !== null) return; // sudah dijawab
+        var oi = parseInt(btn.getAttribute('data-oi'),10);
+        quizAnswers[idx] = oi;
+        btns.forEach(function(b,bi){
+          b.disabled = true;
+          if(bi === item.correct) b.classList.add('correct');
+          if(bi === oi && oi !== item.correct) b.classList.add('wrong');
+        });
+        document.getElementById('explain-'+idx).classList.add('show');
+        updateQuizProgress();
+      });
+    });
+  });
+}
+
+function updateQuizProgress(){
+  var answered = quizAnswers.filter(function(a){return a!==null;}).length;
+  var pct = Math.round(answered/quizData.length*100);
+  var bar = quizSlot.querySelector('.quiz-progress-fill');
+  if(bar) bar.style.width = pct+"%";
+  if(answered === quizData.length) buildQuizResult();
+}
+
+function buildQuizResult(){
+  var correctCount = 0;
+  var recapHtml = "";
+  quizData.forEach(function(item, idx){
+    var isOk = quizAnswers[idx] === item.correct;
+    if(isOk) correctCount++;
+    recapHtml += '<div class="recap-row">'
+      + '<div class="recap-icon '+(isOk?'ok':'no')+'">'+(isOk?'✓':'✕')+'</div>'
+      + '<div class="txt"><b style="font-size:13.5px;color:var(--text-hi);">'+(idx+1)+'. '+escapeHtml(item.q)+'</b><br>'
+      + '<small>Jawaban benar: <b style="color:var(--green);">'+letters[item.correct]+'. '+escapeHtml(item.opts[item.correct])+'</b>'
+      + (isOk? '' : ' · Jawabanmu: <b style="color:var(--rose);">'+letters[quizAnswers[idx]]+'. '+escapeHtml(item.opts[quizAnswers[idx]])+'</b>')
+      + '</small></div></div>';
+  });
+  var pct = Math.round(correctCount/quizData.length*100);
+  document.getElementById('resultRing').style.setProperty('--pct', pct);
+  document.getElementById('resultScoreTxt').textContent = correctCount+"/"+quizData.length;
+  var title = correctCount===5 ? "Sempurna! Kamu menguasai materi ini 🌟" :
+              correctCount>=3 ? "Bagus! Sedikit lagi menuju sempurna 💪" :
+              "Yuk pelajari lagi bagian Materi ya 📘";
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultRecap').innerHTML = recapHtml;
+  showToast("Kuis selesai! Skormu "+correctCount+"/"+quizData.length);
+  rebuildDeck();
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+
+buildQuiz();
+
+/* ============================================================
+   3. FLOWCHART GAME (drag & drop)
+   ============================================================ */
+var gamePieces = [
+  {id:'terminator-mulai', label:'MULAI', cls:'p-terminator'},
+  {id:'io-input', label:'Input N', cls:'p-io'},
+  {id:'decision', label:'N mod 2 = 0 ?', cls:'p-decision'},
+  {id:'process-genap', label:'Cetak "Genap"', cls:'p-process'},
+  {id:'process-ganjil', label:'Cetak "Ganjil"', cls:'p-process'},
+  {id:'terminator-selesai', label:'SELESAI', cls:'p-terminator'}
+];
+var shuffled = gamePieces.slice().sort(function(){return Math.random()-0.5;});
+var tray = document.getElementById('pieceTray');
+var dropzones = Array.prototype.slice.call(document.querySelectorAll('.dropzone'));
+
+function renderTray(){
+  tray.innerHTML = "";
+  shuffled.forEach(function(p){
+    var slot = document.createElement('div');
+    slot.className = 'tray-slot';
+    var el = document.createElement('div');
+    el.className = 'piece '+p.cls+' tray-shape';
+    el.textContent = p.label;
+    el.draggable = true;
+    el.dataset.pieceId = p.id;
+    el.addEventListener('dragstart', function(e){
+      e.dataTransfer.setData('text/plain', p.id);
+      setTimeout(function(){ el.style.opacity = '0.3'; }, 0);
+    });
+    el.addEventListener('dragend', function(){ el.style.opacity = '1'; });
+    slot.appendChild(el);
+    tray.appendChild(slot);
+  });
+}
+renderTray();
+
+var placed = {}; // dropzoneEl -> pieceId
+
+dropzones.forEach(function(zone){
+  zone.addEventListener('dragover', function(e){ e.preventDefault(); zone.classList.add('over'); });
+  zone.addEventListener('dragleave', function(){ zone.classList.remove('over'); });
+  zone.addEventListener('drop', function(e){
+    e.preventDefault();
+    zone.classList.remove('over');
+    var pieceId = e.dataTransfer.getData('text/plain');
+    var piece = gamePieces.filter(function(p){return p.id===pieceId;})[0];
+    if(!piece) return;
+    // jika slot sudah terisi, kembalikan piece lama ke tray dulu
+    if(zone.dataset.filledWith){
+      returnPieceToTray(zone.dataset.filledWith);
+    }
+    // jika piece ini sudah dipakai di zone lain, kosongkan zone lama
+    dropzones.forEach(function(z){
+      if(z.dataset.filledWith === pieceId){ z.dataset.filledWith=''; z.classList.remove('filled','correct','wrong'); z.innerHTML='<span class="zone-label">'+z.querySelector('.zone-label').textContent+'</span>'; }
+    });
+    zone.dataset.filledWith = pieceId;
+    zone.classList.add('filled');
+    zone.classList.remove('correct','wrong');
+    var lbl = zone.querySelector('.zone-label') ? zone.querySelector('.zone-label').outerHTML : '';
+    zone.innerHTML = lbl + '<div class="piece '+piece.cls+'">'+piece.label+'</div>';
+    // remove from tray
+    var trayEl = tray.querySelector('[data-piece-id="'+pieceId+'"]');
+    if(trayEl) trayEl.parentElement.remove();
+  });
+});
+
+function returnPieceToTray(pieceId){
+  var piece = gamePieces.filter(function(p){return p.id===pieceId;})[0];
+  if(!piece) return;
+  var slot = document.createElement('div');
+  slot.className = 'tray-slot';
+  var el = document.createElement('div');
+  el.className = 'piece '+piece.cls+' tray-shape';
+  el.textContent = piece.label;
+  el.draggable = true;
+  el.dataset.pieceId = piece.id;
+  el.addEventListener('dragstart', function(e){
+    e.dataTransfer.setData('text/plain', piece.id);
+    setTimeout(function(){ el.style.opacity = '0.3'; }, 0);
+  });
+  el.addEventListener('dragend', function(){ el.style.opacity = '1'; });
+  slot.appendChild(el);
+  tray.appendChild(slot);
+}
+
+document.getElementById('btnCheckGame').addEventListener('click', function(){
+  var correctN = 0;
+  dropzones.forEach(function(zone){
+    var expect = zone.getAttribute('data-answer');
+    var got = zone.dataset.filledWith || '';
+    if(got && got === expect){
+      zone.classList.add('correct'); zone.classList.remove('wrong'); correctN++;
+    } else if(got){
+      zone.classList.add('wrong'); zone.classList.remove('correct');
+    }
+  });
+  document.getElementById('gameScore').textContent = correctN+"/6";
+  var fb = document.getElementById('gameFeedback');
+  fb.className = 'feedback-msg ' + (correctN===6 ? 'ok':'fail');
+  fb.textContent = correctN===6
+    ? "🎉 Sempurna! Flowchart-mu sudah tersusun dengan benar."
+    : "Masih ada "+(6-correctN)+" simbol yang belum tepat. Coba periksa lagi urutannya!";
+  if(correctN===6) showToast("Flowchart berhasil disusun dengan benar! 🎉");
+});
+
+document.getElementById('btnResetGame').addEventListener('click', function(){
+  dropzones.forEach(function(zone){
+    var lbl = zone.querySelector('.zone-label') ? zone.querySelector('.zone-label').outerHTML : '';
+    zone.innerHTML = lbl;
+    zone.dataset.filledWith = '';
+    zone.classList.remove('filled','correct','wrong','over');
+  });
+  shuffled = gamePieces.slice().sort(function(){return Math.random()-0.5;});
+  renderTray();
+  document.getElementById('gameScore').textContent = "0/6";
+  document.getElementById('gameFeedback').className = 'feedback-msg';
+});
+
+/* ============================================================
+   4. LKPD — unduh jawaban sebagai .txt
+   ============================================================ */
+document.getElementById('btnDownloadLkpd').addEventListener('click', function(){
+  var lines = [
+    "LEMBAR KERJA PESERTA DIDIK (LKPD)",
+    "Topik: Prinsip Dasar Algoritma Pemrograman",
+    "======================================================",
+    "Nama   : " + (student.nama || '-'),
+    "Kelas  : " + (student.kelas || '-'),
+    "Absen  : " + (student.absen || '-'),
+    "Tanggal: " + new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}),
+    "======================================================",
+    "",
+    "1) Algoritma luas persegi panjang (kalimat deskriptif):",
+    document.getElementById('lkpdQ1').value || '(belum diisi)',
+    "",
+    "2) Algoritma luas persegi panjang (pseudocode):",
+    document.getElementById('lkpdQ2').value || '(belum diisi)',
+    "",
+    "3) Varian dan invarian pada loop penjumlahan 1..N:",
+    document.getElementById('lkpdQ3').value || '(belum diisi)',
+    "",
+    "4) Dampak loop tanpa varian yang benar:",
+    document.getElementById('lkpdQ4').value || '(belum diisi)',
+    ""
+  ];
+  var blob = new Blob([lines.join("\\n")], {type:"text/plain;charset=utf-8"});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = "LKPD_Algoritma_" + (student.nama||'siswa').replace(/\\s+/g,'_') + ".txt";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast("Jawaban LKPD berhasil diunduh ✓");
+});
+
+/* ============================================================
+   5. REFLEKSI
+   ============================================================ */
+document.getElementById('moodRow').addEventListener('click', function(e){
+  var btn = e.target.closest('.mood-btn');
+  if(!btn) return;
+  document.querySelectorAll('.mood-btn').forEach(function(b){b.classList.remove('sel');});
+  btn.classList.add('sel');
+});
+document.getElementById('btnFinishRef').addEventListener('click', function(){
+  showToast("Terima kasih atas refleksimu! ✓");
+  goToSection('penutup');
+});
+
+/* ============================================================
+   6. NAVIGATION / SLIDE DECK
+   ============================================================ */
+var viewport = document.getElementById('viewport');
+var slides = [];
+var currentIndex = 0;
+
+function rebuildDeck(){
+  slides = Array.prototype.slice.call(viewport.querySelectorAll('.slide'));
+  renderDots();
+  showSlide(currentIndex, true);
+}
+function initDeckIfNeeded(){ if(slides.length===0) rebuildDeck(); }
+
+function sectionSlides(name){
+  return slides.filter(function(s){ return s.getAttribute('data-section')===name; });
+}
+
+function renderDots(){
+  var dotsWrap = document.getElementById('navDots');
+  var sec = slides[currentIndex] ? slides[currentIndex].getAttribute('data-section') : 'home';
+  var group = sectionSlides(sec);
+  dotsWrap.innerHTML = "";
+  if(group.length <= 1){ dotsWrap.style.display='none'; return; }
+  dotsWrap.style.display='flex';
+  group.forEach(function(s){
+    var d = document.createElement('div');
+    d.className = 'nav-dot' + (s===slides[currentIndex] ? ' active':'');
+    dotsWrap.appendChild(d);
+  });
+}
+
+function showSlide(idx, skipScroll){
+  if(idx<0) idx=0;
+  if(idx>=slides.length) idx=slides.length-1;
+  slides.forEach(function(s,i){ s.classList.toggle('active', i===idx); });
+  currentIndex = idx;
+  var current = slides[idx];
+  var sec = current.getAttribute('data-section');
+
+  // topnav highlight
+  document.querySelectorAll('.topnav-btn').forEach(function(b){
+    b.classList.toggle('active', b.getAttribute('data-goto')===sec);
+  });
+
+  // bottom nav state
+  document.getElementById('btnPrev').disabled = (idx===0);
+  document.getElementById('btnNext').disabled = (idx===slides.length-1);
+  var group = sectionSlides(sec);
+  var posInGroup = group.indexOf(current)+1;
+  var labelMap = {home:'Beranda', tujuan:'Tujuan Pembelajaran', materi:'Materi', contoh:'Contoh / Media', lkpd:'LKPD', kuis:'Kuis', refleksi:'Refleksi', penutup:'Penutup'};
+  document.getElementById('navLabel').textContent = (labelMap[sec]||sec) + (group.length>1 ? '  ·  '+posInGroup+'/'+group.length : '');
+  renderDots();
+  if(current.scrollTop!==undefined) current.scrollTop = 0;
+}
+
+function goToSection(name){
+  initDeckIfNeeded();
+  var group = sectionSlides(name);
+  if(group.length===0) return;
+  var idx = slides.indexOf(group[0]);
+  showSlide(idx);
+}
+
+document.getElementById('btnNext').addEventListener('click', function(){ showSlide(currentIndex+1); });
+document.getElementById('btnPrev').addEventListener('click', function(){ showSlide(currentIndex-1); });
+document.getElementById('btnHome').addEventListener('click', function(){ goToSection('home'); });
+document.getElementById('btnBackHome').addEventListener('click', function(){ goToSection('home'); });
+
+document.addEventListener('click', function(e){
+  var t = e.target.closest('[data-goto]');
+  if(t){ goToSection(t.getAttribute('data-goto')); }
+});
+
+document.addEventListener('keydown', function(e){
+  if(!document.getElementById('screen-main').classList.contains('active')) return;
+  if(e.key==='ArrowRight') showSlide(currentIndex+1);
+  if(e.key==='ArrowLeft') showSlide(currentIndex-1);
+});
+
+/* ============================================================
+   7. TOAST
+   ============================================================ */
+var toastTimer = null;
+function showToast(msg){
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 2600);
+}
+
+})();
+</script>
+</body>
+</html>
